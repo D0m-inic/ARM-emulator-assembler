@@ -1,0 +1,124 @@
+\documentclass [10pt] {article}
+\usepackage{fullpage}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows}
+
+\usepackage{graphicx}
+
+\title{ARM-11 INTERIM CHECKPOINT REPORT}
+\author{Darius Nilforooshan, Dominic Qu, Sam Tackaberry, Sachin Wadhwani}
+\date{\today}
+
+\tikzstyle{boxEmulate} = [rectangle, rounded corners,  text width=4cm, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=white]
+
+\tikzstyle{boxUtils} = [rectangle, rounded corners,  text width=6cm, minimum width=3cm, minimum height=1cm, draw=black, fill=white]
+
+\tikzstyle{arrow} = [thick, ->, >=stealth]
+
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+\maketitle
+
+\section*{Delegation of Work}
+After reading the specification for the first time, we discussed our thoughts and possible implementations of the emulator. We then decided to split the work and individually implement the foundations of the project. This included the structure of the memory, registers and pipeline, and the data types used to store instructions. Once the foundations were in place, we discussed how to move forward and outlined the tasks needed, including the binary file loader, pipelining, the fetch-decode-execute cycle and printing the output of the ARM structure.
+\vspace {0.3cm}
+\\
+We decided completing the binary file loader and the fetch function would be crucial to successfully debugging our decode and execute functions. Therefore, we split into pairs, with one completing the file loader and the other starting work on the fetching and decoding functions. Once we had tested and were confident in the functionality of these parts, we separated the ‘decode’ and ‘execute’ aspects out into their respective instruction types and worked on them individually whilst periodically checking on each others progress to ensure we knew the bigger picture. Some aspects of the execution were more complex and took longer than others and thus those of us who had finished the simpler functions proceeded to assist other group members in writing the more complex execution functions. Once all of the features had been implemented, we worked individually on different instructions to collectively debug the program, selecting bugs to fix based on our programming strengths.
+
+\section*{Group evaluation}
+We believe we have been successful as a team in co-operating on certain tasks and delegating work. Our individual motivation to produce clean, functional code and willingness to collaborate has ensured that we have had no issues with communication or work ethic. We have been able to rely on each other to complete the work and while some team members may have made fewer commits on our GitLab repository, we have been utilising VSCode’s Live Share feature to simultaneously contribute, ensuring almost every commit is the product of collaboration. 
+\vspace {0.3cm}
+\\
+Aside from days where it is not possible, we have been mainly convening in person for the work. This was extremely beneficial as for more difficult aspects of the emulator, we could discuss issues and find bugs more efficiently together. Working in person allowed us to easily delegate tasks and collectively discuss any issues with the code. However, when working on the assembler, we may change to a more individual style of work. Whilst still keeping our in-person sessions, albeit more infrequently this allows us to spend more time on each part and work on different schedules.
+
+\section*{Implementation of Emulator}
+We built our emulator by splitting it into three primary actions which consist of smaller, more manageable tasks: the binary file loader to take the file and load the instructions into memory, the fetch-decode-execute cycle and outputting the ARM structure. This was then separated into fetch, decode, and execute functions, which themselves use helper functions for each instruction type, and are stored in separately to maintain clear and manageable file organisation. Our fetch function takes an instruction from memory, the decode function declares the type of instruction it is and the execution function executes one of the four types of instructions given by decode. Building the tokenizer for the assembly of the different types of instructions of the assembler, it appears that the bit masking functions of the emulator can be reused to extract the flags, registers, conditions and offset from the instructions. Furthermore, the type definitions and structures can be reused for the assembler, such as the reg structure and instruction data types. Our constants header file can also be used to define many constants, eliminating magic numbers.
+
+\includegraphics{...}
+
+\begin{tikzpicture}[node distance=2cm]
+
+\node (constants) [boxEmulate, xshift=-3cm, yshift=-2cm, left of=utils] {
+\textbf{ constants.h} 
+\rule{\textwidth}{0.4pt}
+Contains constants for masks and shifts required for manipulation of memory and registers within the ARM instruction set, primarily to eliminate magic numbers
+};
+
+\node (utils) [boxEmulate, right of=constants, xshift=3cm] {
+\textbf{utils.h} 
+\rule{\textwidth}{0.4pt}
+Declares useful helper functions and data types common to multiple files
+};
+
+\node (fetch) [boxUtils,xshift = 4cm, right of=utils]{
+\center\textbf{ fetch.c }
+\rule{\textwidth}{0.4pt}
+\center\textbf{ fetch.h }
+\rule{\textwidth}{0.4pt}
+Includes code for the binary file loader, intialisation of register and fetching instructions
+};
+
+\node (decode) [boxUtils,xshift=4cm,yshift = 8cm, right of=utils]{
+\center\textbf{ decode.c }
+\rule{\textwidth}{0.4pt}
+\center\textbf{ decode.h }
+\rule{\textwidth}{0.4pt}
+Includes code for the decoding of instructions for each of the different types of instruction
+};
+
+\node (execute) [boxUtils,xshift =-2cm, yshift = 4.5cm, left of=utils]{
+\center\textbf{ execute.c }
+\rule{\textwidth}{0.4pt}
+\center\textbf{ execute.h }
+\rule{\textwidth}{0.4pt}
+Includes code for the execution of instructions for each of the different types of instruction, including determining whether instructions are executed
+};
+
+\node (printOutput) [boxUtils,xshift =-2cm, yshift = 9cm, left of = utils]{
+\center\textbf{ printOutput.c }
+\rule{\textwidth}{0.4pt}
+\center\textbf{ printOutput.h }
+\rule{\textwidth}{0.4pt}
+Includes code necessary for the printing of registers and non-zero memory
+};
+
+\node (emulate) [boxUtils,right of = utils, xshift=4cm,yshift = 4cm]{
+\center\textbf{ emulate.c }
+\rule{\textwidth}{0.4pt}
+\center\textbf{ emulate.h }
+\rule{\textwidth}{0.4pt}
+The emulator main program, also includes the implementation of useful helper functions
+};
+
+\draw [arrow] (utils.north) -- (execute.east);
+\draw [arrow] (utils.north) -- (emulate.west);
+\draw [arrow] (utils.north) -- (decode.west);
+\draw [arrow] (utils.north) -- (printOutput.east);
+\draw [arrow] (utils.east) -- (fetch.west);
+
+\draw [arrow] (constants.north) -- (execute.south);
+\draw [arrow] (constants.north) -- (emulate.west);
+\draw [arrow] (constants.south) |- (fetch.south);
+\draw [arrow] (constants.north) -- (decode.west);
+
+\draw [arrow] (printOutput.east) -- (emulate.west);
+
+\draw [arrow] (fetch.north) -- (emulate.south);
+
+
+\draw [arrow] (decode.south) -- (emulate.north);
+
+
+\draw [arrow] (execute.east) -- (emulate.west);
+
+
+\draw [arrow] (decode.west) -- (execute.east);
+
+\end{tikzpicture}
+
+\section*{Thoughts on the Assembler}
+Looking forward, although we have experience reading from a binary file, the code was complex to write and we can assume the same for the file writer. Furthermore when building our symbol table we must ensure we correctly associate all the labels with their respective memory addresses and choose the right abstract data type to use. These can then be utilised in the second part of the assembler allowing us to efficiently complete the task. 
+
+\end{document}
